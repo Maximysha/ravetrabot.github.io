@@ -5,7 +5,7 @@ from app.handlers import router1
 
 
 async def main():
-    bot = Bot(token='7917688971:AAEiaD7lE_tAVbaCtjBaUDMAqEPoIuCUXh0')
+    bot = Bot(token='7743786584:AAEQKpXN4rj4-X5-HGK49l2j2XZJEUT6hHU')
     dp = Dispatcher()
     dp.include_router(router1)
     await dp.start_polling(bot)
