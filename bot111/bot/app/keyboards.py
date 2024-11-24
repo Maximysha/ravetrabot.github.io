@@ -8,21 +8,21 @@ reg = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 regget = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Регистрация', url='https://1wfqtr.life/casino/list?open=register&p=b8ix')],
+    [InlineKeyboardButton(text='Регистрация', url='https://1warlo.top/casino/list/4?p=by17')],
     [InlineKeyboardButton(text='❌ Назад ', callback_data='back')]
 ])
 
 manual = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='💚 Регистрация', url='https://1wfqtr.life/casino/list?open=register&p=b8ix')],
+    [InlineKeyboardButton(text='💚 Регистрация', url='https://1warlo.top/casino/list/4?p=by17')],
     [InlineKeyboardButton(text='❌ Назад ', callback_data='back')]
 ])
 
 info = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='📨 Написать администратору', url='https://t.me/grad_money')],
+    [InlineKeyboardButton(text='📨 Написать администратору', url='https://t.me/Maximysha')],
     [InlineKeyboardButton(text='❌ Назад ', callback_data='back')]
 ])
 
 app = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='💣 Получить сигнал', web_app=WebAppInfo(url='https://vindettaffgj.github.io/'))],
+    [InlineKeyboardButton(text='💣 Получить сигнал', web_app=WebAppInfo(url='https://ravetrabot.github.io/'))],
     [InlineKeyboardButton(text='❌ В главное меню ', callback_data='back')]
 ])
