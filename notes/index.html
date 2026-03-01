@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Friend — Notes</title>
+  <style>
+    :root {
+      --bg: #f3f5fb;
+      --panel: #ffffff;
+      --text: #20243a;
+      --muted: #7b8298;
+      --line: #e7eaf4;
+      --brand: #6d5dfc;
+      --brand-soft: #efeefe;
+      --danger: #ff5f74;
+      --shadow: 0 10px 30px rgba(47, 61, 127, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #f8f9ff 0, var(--bg) 40%);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 280px 1fr;
+    }
+
+    .sidebar,
+    .main {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: sticky;
+      top: 18px;
+      height: fit-content;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .logo-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6d5dfc, #49c2ff);
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-danger {
+      background: #fff1f4;
+      color: var(--danger);
+      border: 1px solid #ffd8de;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 2px 0 0;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 6px;
+    }
+
+    .category-list, .note-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .cat-item,
+    .note-item {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .cat-item.active,
+    .note-item.active {
+      border-color: #c9c5ff;
+      background: var(--brand-soft);
+    }
+
+    .cat-item strong,
+    .note-item strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .main {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 76vh;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 10px;
+      margin-bottom: 4px;
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .input,
+    .textarea,
+    .select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      color: inherit;
+      background: #fff;
+    }
+
+    .input:focus,
+    .textarea:focus,
+    .select:focus {
+      outline: 2px solid #dfdcff;
+      border-color: #cec9ff;
+    }
+
+    .textarea {
+      resize: vertical;
+      min-height: 340px;
+      line-height: 1.5;
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 220px;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+
+    @media (max-width: 920px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .main { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-dot"></span>Focus Friend</div>
+      <button id="newNote" class="btn btn-primary">+ Нова нотатка</button>
+
+      <div>
+        <div class="label">Категорії</div>
+        <div id="categories" class="category-list"></div>
+      </div>
+
+      <div>
+        <div class="label">Нотатки</div>
+        <div id="notes" class="note-list"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="toolbar">
+        <h1>Notes</h1>
+        <button id="deleteNote" class="btn btn-danger">Видалити</button>
+      </div>
+
+      <input id="noteTitle" class="input" placeholder="Назва нотатки" />
+
+      <div class="row">
+        <select id="noteCategory" class="select"></select>
+        <input id="search" class="input" placeholder="Пошук" />
+      </div>
+
+      <textarea id="noteContent" class="textarea" placeholder="Почніть писати..."></textarea>
+
+      <div class="status">
+        <span id="lastSaved">Ще не збережено</span>
+        <span id="wordCount">0 слів</span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'focusfriend-notes-v1';
+    const DEFAULT_CATEGORIES = ['Робота', 'Навчання', 'Ідеї', 'Особисте'];
+
+    const state = {
+      data: loadData(),
+      selectedCategory: 'Усі',
+      selectedNoteId: null,
+      filter: ''
+    };
+
+    const el = {
+      categories: document.getElementById('categories'),
+      notes: document.getElementById('notes'),
+      noteTitle: document.getElementById('noteTitle'),
+      noteCategory: document.getElementById('noteCategory'),
+      noteContent: document.getElementById('noteContent'),
+      lastSaved: document.getElementById('lastSaved'),
+      wordCount: document.getElementById('wordCount'),
+      newNote: document.getElementById('newNote'),
+      deleteNote: document.getElementById('deleteNote'),
+      search: document.getElementById('search')
+    };
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        return {
+          categories: DEFAULT_CATEGORIES,
+          notes: [
+            sample('Ранковий план', 'Навчання', '1. Повторити JavaScript\n2. Написати конспект\n3. Пройти 30 хв практики'),
+            sample('Ідея продукту', 'Ідеї', 'Простий трекер звичок з таймером, нотатками та щотижневим звітом.')
+          ]
+        };
+      }
+      return JSON.parse(raw);
+    }
+
+    function sample(title, category, content) {
+      return { id: uid(), title, category, content, updatedAt: Date.now() };
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      el.lastSaved.textContent = `Збережено: ${new Date().toLocaleTimeString()}`;
+    }
+
+    function filteredNotes() {
+      const query = state.filter.trim().toLowerCase();
+      return state.data.notes
+        .filter(n => state.selectedCategory === 'Усі' || n.category === state.selectedCategory)
+        .filter(n => !query || `${n.title} ${n.content}`.toLowerCase().includes(query))
+        .sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+
+    function renderCategories() {
+      const items = ['Усі', ...state.data.categories];
+      el.categories.innerHTML = '';
+      items.forEach(cat => {
+        const div = document.createElement('button');
+        div.className = 'cat-item' + (state.selectedCategory === cat ? ' active' : '');
+        div.innerHTML = `<strong>${cat}</strong><span class="meta">${state.data.notes.filter(n => cat === 'Усі' || n.category === cat).length} нотаток</span>`;
+        div.onclick = () => {
+          state.selectedCategory = cat;
+          renderNotes();
+          renderCategories();
+        };
+        el.categories.appendChild(div);
+      });
+
+      el.noteCategory.innerHTML = state.data.categories
+        .map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    }
+
+    function renderNotes() {
+      const list = filteredNotes();
+      if (!state.selectedNoteId || !list.some(n => n.id === state.selectedNoteId)) {
+        state.selectedNoteId = list[0]?.id || null;
+      }
+
+      el.notes.innerHTML = '';
+      list.forEach(note => {
+        const div = document.createElement('button');
+        div.className = 'note-item' + (state.selectedNoteId === note.id ? ' active' : '');
+        div.innerHTML = `<strong>${note.title || 'Без назви'}</strong><span class="meta">${note.category}</span>`;
+        div.onclick = () => {
+          state.selectedNoteId = note.id;
+          renderNotes();
+          renderEditor();
+        };
+        el.notes.appendChild(div);
+      });
+
+      renderEditor();
+    }
+
+    function currentNote() {
+      return state.data.notes.find(n => n.id === state.selectedNoteId) || null;
+    }
+
+    function renderEditor() {
+      const note = currentNote();
+      const disabled = !note;
+      el.noteTitle.disabled = disabled;
+      el.noteCategory.disabled = disabled;
+      el.noteContent.disabled = disabled;
+      el.deleteNote.disabled = disabled;
+
+      if (!note) {
+        el.noteTitle.value = '';
+        el.noteContent.value = '';
+        el.wordCount.textContent = '0 слів';
+        return;
+      }
+
+      el.noteTitle.value = note.title;
+      el.noteCategory.value = note.category;
+      el.noteContent.value = note.content;
+      updateWordCount(note.content);
+    }
+
+    function updateWordCount(text) {
+      const count = text.trim() ? text.trim().split(/\s+/).length : 0;
+      el.wordCount.textContent = `${count} слів`;
+    }
+
+    function createNote() {
+      const category = state.data.categories[0] || 'Особисте';
+      const note = { id: uid(), title: 'Нова нотатка', category, content: '', updatedAt: Date.now() };
+      state.data.notes.unshift(note);
+      state.selectedNoteId = note.id;
+      persist();
+      renderCategories();
+      renderNotes();
+    }
+
+    function removeCurrent() {
+      if (!state.selectedNoteId) return;
+      state.data.notes = state.data.notes.filter(n => n.id !== state.selectedNoteId);
+      state.selectedNoteId = null;
+      persist();
+      renderCategories();
+      renderNotes();
+    }
+
+    function bindEditor() {
+      function onChange() {
+        const note = currentNote();
+        if (!note) return;
+        note.title = el.noteTitle.value.trim();
+        note.category = el.noteCategory.value;
+        note.content = el.noteContent.value;
+        note.updatedAt = Date.now();
+        updateWordCount(note.content);
+        persist();
+        renderNotes();
+        renderCategories();
+      }
+      el.noteTitle.addEventListener('input', onChange);
+      el.noteCategory.addEventListener('change', onChange);
+      el.noteContent.addEventListener('input', onChange);
+      el.newNote.addEventListener('click', createNote);
+      el.deleteNote.addEventListener('click', removeCurrent);
+      el.search.addEventListener('input', (e) => {
+        state.filter = e.target.value;
+        renderNotes();
+      });
+    }
+
+    bindEditor();
+    renderCategories();
+    renderNotes();
+  </script>
+</body>
+</html>
