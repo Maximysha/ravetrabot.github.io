@@ -14,6 +14,7 @@
       --brand: #6d5dfc;
       --brand-soft: #efeefe;
       --danger: #ff5f74;
+      --ok: #1f9d61;
       --shadow: 0 10px 30px rgba(47, 61, 127, 0.08);
     }
 
@@ -28,16 +29,17 @@
     }
 
     .app {
-      max-width: 1180px;
+      max-width: 1200px;
       margin: 24px auto;
       padding: 0 16px;
       display: grid;
       gap: 16px;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 300px 1fr;
     }
 
     .sidebar,
-    .main {
+    .main,
+    .auth-panel {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 18px;
@@ -54,20 +56,8 @@
       height: fit-content;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    .logo-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #6d5dfc, #49c2ff);
-    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .logo-dot { width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, #6d5dfc, #49c2ff); }
 
     .btn {
       border: 0;
@@ -76,75 +66,47 @@
       font-weight: 600;
       cursor: pointer;
       transition: transform .15s ease, opacity .15s ease;
+      font: inherit;
     }
-
     .btn:hover { transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-    .btn-primary {
-      background: var(--brand);
-      color: #fff;
-      width: 100%;
-    }
+    .btn-primary { background: var(--brand); color: #fff; width: 100%; }
+    .btn-danger { background: #fff1f4; color: var(--danger); border: 1px solid #ffd8de; }
+    .btn-light { background: #f7f8fe; border: 1px solid var(--line); color: var(--text); }
 
-    .btn-danger {
-      background: #fff1f4;
-      color: var(--danger);
-      border: 1px solid #ffd8de;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 13px;
-      margin: 2px 0 0;
-    }
-
-    .label {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      margin-top: 6px;
-    }
+    .meta { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
+    .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; }
 
     .category-list, .note-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 220px;
+      max-height: 230px;
       overflow: auto;
       padding-right: 4px;
     }
 
-    .cat-item,
-    .note-item {
+    .cat-item, .note-item {
       border: 1px solid var(--line);
       background: #fff;
       border-radius: 12px;
       padding: 10px;
       cursor: pointer;
       text-align: left;
+      width: 100%;
     }
 
-    .cat-item.active,
-    .note-item.active {
-      border-color: #c9c5ff;
-      background: var(--brand-soft);
-    }
-
-    .cat-item strong,
-    .note-item strong {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 2px;
-    }
+    .cat-item.active, .note-item.active { border-color: #c9c5ff; background: var(--brand-soft); }
+    .cat-item strong, .note-item strong { display: block; font-size: 14px; margin-bottom: 2px; }
 
     .main {
       padding: 18px;
       display: grid;
       gap: 12px;
-      grid-template-rows: auto auto 1fr auto;
-      min-height: 76vh;
+      grid-template-rows: auto auto auto 1fr auto;
+      min-height: 78vh;
     }
 
     .toolbar {
@@ -157,14 +119,10 @@
       margin-bottom: 4px;
     }
 
-    .toolbar h1 {
-      margin: 0;
-      font-size: 24px;
-    }
+    .toolbar h1 { margin: 0; font-size: 24px; }
+    .toolbar-actions { display: flex; gap: 8px; }
 
-    .input,
-    .textarea,
-    .select {
+    .input, .textarea, .select {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -174,24 +132,13 @@
       background: #fff;
     }
 
-    .input:focus,
-    .textarea:focus,
-    .select:focus {
+    .input:focus, .textarea:focus, .select:focus {
       outline: 2px solid #dfdcff;
       border-color: #cec9ff;
     }
 
-    .textarea {
-      resize: vertical;
-      min-height: 340px;
-      line-height: 1.5;
-    }
-
-    .row {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: 1fr 220px;
-    }
+    .textarea { resize: vertical; min-height: 340px; line-height: 1.5; }
+    .row { display: grid; gap: 12px; grid-template-columns: 1fr 240px; }
 
     .status {
       color: var(--muted);
@@ -201,19 +148,61 @@
       align-items: center;
       border-top: 1px solid var(--line);
       padding-top: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
+
+    .auth-panel {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      max-width: 460px;
+      max-height: fit-content;
+      padding: 20px;
+      z-index: 20;
+    }
+
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 19, 38, 0.45);
+      z-index: 19;
+    }
+
+    .auth-grid { display: grid; gap: 10px; }
+    .auth-title { margin: 0 0 8px; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .ok { color: var(--ok); font-size: 13px; }
+    .err { color: #d22f4c; font-size: 13px; }
+
+    .hidden { display: none !important; }
 
     @media (max-width: 920px) {
       .app { grid-template-columns: 1fr; }
       .sidebar { position: static; }
       .main { min-height: auto; }
+      .row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <div id="authBackdrop" class="auth-backdrop"></div>
+  <section id="authPanel" class="auth-panel">
+    <h2 class="auth-title">Вхід до Focus Friend Notes</h2>
+    <p class="hint">Щоб користуватись <b>усіма функціями</b>, увійдіть в акаунт.</p>
+    <div class="auth-grid">
+      <input id="loginUsername" class="input" placeholder="Логін" autocomplete="username" />
+      <input id="loginPassword" class="input" type="password" placeholder="Пароль" autocomplete="current-password" />
+      <button id="loginBtn" class="btn btn-primary">Увійти</button>
+      <p class="hint">Демо: <code>admin</code> / <code>admin123</code> або <code>guest</code> / <code>guest123</code></p>
+      <p id="authMsg" class="err hidden">Невірний логін або пароль.</p>
+    </div>
+  </section>
+
   <div class="app">
     <aside class="sidebar">
       <div class="logo"><span class="logo-dot"></span>Focus Friend</div>
+      <div class="meta">Користувач: <b id="whoami">—</b></div>
       <button id="newNote" class="btn btn-primary">+ Нова нотатка</button>
 
       <div>
@@ -225,12 +214,19 @@
         <div class="label">Нотатки</div>
         <div id="notes" class="note-list"></div>
       </div>
+
+      <button id="logoutBtn" class="btn btn-light">Вийти</button>
     </aside>
 
     <main class="main">
       <div class="toolbar">
         <h1>Notes</h1>
-        <button id="deleteNote" class="btn btn-danger">Видалити</button>
+        <div class="toolbar-actions">
+          <button id="exportBtn" class="btn btn-light">Експорт</button>
+          <label class="btn btn-light" for="importFile" style="display:inline-flex;align-items:center;cursor:pointer;">Імпорт</label>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+          <button id="deleteNote" class="btn btn-danger">Видалити</button>
+        </div>
       </div>
 
       <input id="noteTitle" class="input" placeholder="Назва нотатки" />
@@ -250,17 +246,31 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'focusfriend-notes-v1';
+    const AUTH_KEY = 'focusfriend-auth-v1';
+    const STORAGE_PREFIX = 'focusfriend-notes-v2';
+    const USERS = {
+      admin: 'admin123',
+      guest: 'guest123'
+    };
     const DEFAULT_CATEGORIES = ['Робота', 'Навчання', 'Ідеї', 'Особисте'];
 
     const state = {
-      data: loadData(),
+      username: null,
+      data: null,
       selectedCategory: 'Усі',
       selectedNoteId: null,
       filter: ''
     };
 
     const el = {
+      authBackdrop: document.getElementById('authBackdrop'),
+      authPanel: document.getElementById('authPanel'),
+      loginUsername: document.getElementById('loginUsername'),
+      loginPassword: document.getElementById('loginPassword'),
+      loginBtn: document.getElementById('loginBtn'),
+      authMsg: document.getElementById('authMsg'),
+      whoami: document.getElementById('whoami'),
+
       categories: document.getElementById('categories'),
       notes: document.getElementById('notes'),
       noteTitle: document.getElementById('noteTitle'),
@@ -270,14 +280,29 @@
       wordCount: document.getElementById('wordCount'),
       newNote: document.getElementById('newNote'),
       deleteNote: document.getElementById('deleteNote'),
-      search: document.getElementById('search')
+      search: document.getElementById('search'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      importFile: document.getElementById('importFile')
     };
 
-    function loadData() {
-      const raw = localStorage.getItem(STORAGE_KEY);
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function storageKey(username) {
+      return `${STORAGE_PREFIX}:${username}`;
+    }
+
+    function sample(title, category, content) {
+      return { id: uid(), title, category, content, updatedAt: Date.now() };
+    }
+
+    function loadData(username) {
+      const raw = localStorage.getItem(storageKey(username));
       if (!raw) {
         return {
-          categories: DEFAULT_CATEGORIES,
+          categories: [...DEFAULT_CATEGORIES],
           notes: [
             sample('Ранковий план', 'Навчання', '1. Повторити JavaScript\n2. Написати конспект\n3. Пройти 30 хв практики'),
             sample('Ідея продукту', 'Ідеї', 'Простий трекер звичок з таймером, нотатками та щотижневим звітом.')
@@ -287,17 +312,59 @@
       return JSON.parse(raw);
     }
 
-    function sample(title, category, content) {
-      return { id: uid(), title, category, content, updatedAt: Date.now() };
-    }
-
-    function uid() {
-      return Math.random().toString(36).slice(2, 10);
-    }
-
     function persist() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      if (!state.username) return;
+      localStorage.setItem(storageKey(state.username), JSON.stringify(state.data));
       el.lastSaved.textContent = `Збережено: ${new Date().toLocaleTimeString()}`;
+    }
+
+    function setAuthorized(enabled) {
+      const ids = ['newNote', 'deleteNote', 'noteTitle', 'noteCategory', 'noteContent', 'search', 'logoutBtn', 'exportBtn'];
+      ids.forEach(id => {
+        el[id].disabled = !enabled;
+      });
+    }
+
+    function showLogin(show) {
+      el.authBackdrop.classList.toggle('hidden', !show);
+      el.authPanel.classList.toggle('hidden', !show);
+    }
+
+    function login(username, password) {
+      if (!USERS[username] || USERS[username] !== password) {
+        el.authMsg.classList.remove('hidden');
+        return;
+      }
+      state.username = username;
+      localStorage.setItem(AUTH_KEY, username);
+      state.data = loadData(username);
+      state.selectedCategory = 'Усі';
+      state.selectedNoteId = null;
+      state.filter = '';
+      el.search.value = '';
+      el.whoami.textContent = username;
+      setAuthorized(true);
+      showLogin(false);
+      renderCategories();
+      renderNotes();
+    }
+
+    function logout() {
+      localStorage.removeItem(AUTH_KEY);
+      state.username = null;
+      state.data = { categories: [], notes: [] };
+      state.selectedCategory = 'Усі';
+      state.selectedNoteId = null;
+      el.whoami.textContent = '—';
+      setAuthorized(false);
+      el.categories.innerHTML = '';
+      el.notes.innerHTML = '';
+      el.noteTitle.value = '';
+      el.noteCategory.innerHTML = '';
+      el.noteContent.value = '';
+      el.wordCount.textContent = '0 слів';
+      el.lastSaved.textContent = 'Ще не збережено';
+      showLogin(true);
     }
 
     function filteredNotes() {
@@ -312,41 +379,18 @@
       const items = ['Усі', ...state.data.categories];
       el.categories.innerHTML = '';
       items.forEach(cat => {
-        const div = document.createElement('button');
-        div.className = 'cat-item' + (state.selectedCategory === cat ? ' active' : '');
-        div.innerHTML = `<strong>${cat}</strong><span class="meta">${state.data.notes.filter(n => cat === 'Усі' || n.category === cat).length} нотаток</span>`;
-        div.onclick = () => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-item' + (state.selectedCategory === cat ? ' active' : '');
+        btn.innerHTML = `<strong>${cat}</strong><span class="meta">${state.data.notes.filter(n => cat === 'Усі' || n.category === cat).length} нотаток</span>`;
+        btn.onclick = () => {
           state.selectedCategory = cat;
           renderNotes();
           renderCategories();
         };
-        el.categories.appendChild(div);
+        el.categories.appendChild(btn);
       });
 
-      el.noteCategory.innerHTML = state.data.categories
-        .map(cat => `<option value="${cat}">${cat}</option>`).join('');
-    }
-
-    function renderNotes() {
-      const list = filteredNotes();
-      if (!state.selectedNoteId || !list.some(n => n.id === state.selectedNoteId)) {
-        state.selectedNoteId = list[0]?.id || null;
-      }
-
-      el.notes.innerHTML = '';
-      list.forEach(note => {
-        const div = document.createElement('button');
-        div.className = 'note-item' + (state.selectedNoteId === note.id ? ' active' : '');
-        div.innerHTML = `<strong>${note.title || 'Без назви'}</strong><span class="meta">${note.category}</span>`;
-        div.onclick = () => {
-          state.selectedNoteId = note.id;
-          renderNotes();
-          renderEditor();
-        };
-        el.notes.appendChild(div);
-      });
-
-      renderEditor();
+      el.noteCategory.innerHTML = state.data.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
     }
 
     function currentNote() {
@@ -355,7 +399,7 @@
 
     function renderEditor() {
       const note = currentNote();
-      const disabled = !note;
+      const disabled = !note || !state.username;
       el.noteTitle.disabled = disabled;
       el.noteCategory.disabled = disabled;
       el.noteContent.disabled = disabled;
@@ -374,12 +418,35 @@
       updateWordCount(note.content);
     }
 
+    function renderNotes() {
+      const list = filteredNotes();
+      if (!state.selectedNoteId || !list.some(n => n.id === state.selectedNoteId)) {
+        state.selectedNoteId = list[0]?.id || null;
+      }
+
+      el.notes.innerHTML = '';
+      list.forEach(note => {
+        const btn = document.createElement('button');
+        btn.className = 'note-item' + (state.selectedNoteId === note.id ? ' active' : '');
+        btn.innerHTML = `<strong>${note.title || 'Без назви'}</strong><span class="meta">${note.category}</span>`;
+        btn.onclick = () => {
+          state.selectedNoteId = note.id;
+          renderNotes();
+          renderEditor();
+        };
+        el.notes.appendChild(btn);
+      });
+
+      renderEditor();
+    }
+
     function updateWordCount(text) {
       const count = text.trim() ? text.trim().split(/\s+/).length : 0;
       el.wordCount.textContent = `${count} слів`;
     }
 
     function createNote() {
+      if (!state.username) return;
       const category = state.data.categories[0] || 'Особисте';
       const note = { id: uid(), title: 'Нова нотатка', category, content: '', updatedAt: Date.now() };
       state.data.notes.unshift(note);
@@ -390,7 +457,7 @@
     }
 
     function removeCurrent() {
-      if (!state.selectedNoteId) return;
+      if (!state.username || !state.selectedNoteId) return;
       state.data.notes = state.data.notes.filter(n => n.id !== state.selectedNoteId);
       state.selectedNoteId = null;
       persist();
@@ -398,8 +465,48 @@
       renderNotes();
     }
 
-    function bindEditor() {
-      function onChange() {
+    function exportNotes() {
+      if (!state.username) return;
+      const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `notes-${state.username}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importNotes(file) {
+      if (!state.username || !file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || '{}'));
+          if (!Array.isArray(parsed.categories) || !Array.isArray(parsed.notes)) {
+            throw new Error('bad format');
+          }
+          state.data = parsed;
+          state.selectedNoteId = null;
+          persist();
+          renderCategories();
+          renderNotes();
+          el.lastSaved.textContent = 'Імпорт успішний';
+        } catch {
+          el.lastSaved.textContent = 'Помилка імпорту: некоректний JSON';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function bindEvents() {
+      el.loginBtn.addEventListener('click', () => {
+        login(el.loginUsername.value.trim(), el.loginPassword.value);
+      });
+      el.loginPassword.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') login(el.loginUsername.value.trim(), el.loginPassword.value);
+      });
+
+      function onEditorChange() {
         const note = currentNote();
         if (!note) return;
         note.title = el.noteTitle.value.trim();
@@ -411,20 +518,33 @@
         renderNotes();
         renderCategories();
       }
-      el.noteTitle.addEventListener('input', onChange);
-      el.noteCategory.addEventListener('change', onChange);
-      el.noteContent.addEventListener('input', onChange);
+
+      el.noteTitle.addEventListener('input', onEditorChange);
+      el.noteCategory.addEventListener('change', onEditorChange);
+      el.noteContent.addEventListener('input', onEditorChange);
       el.newNote.addEventListener('click', createNote);
       el.deleteNote.addEventListener('click', removeCurrent);
+      el.logoutBtn.addEventListener('click', logout);
+      el.exportBtn.addEventListener('click', exportNotes);
+      el.importFile.addEventListener('change', (e) => importNotes(e.target.files?.[0]));
       el.search.addEventListener('input', (e) => {
         state.filter = e.target.value;
         renderNotes();
       });
     }
 
-    bindEditor();
-    renderCategories();
-    renderNotes();
+    function boot() {
+      bindEvents();
+      setAuthorized(false);
+      const remembered = localStorage.getItem(AUTH_KEY);
+      if (remembered && USERS[remembered]) {
+        login(remembered, USERS[remembered]);
+      } else {
+        showLogin(true);
+      }
+    }
+
+    boot();
   </script>
 </body>
 </html>
