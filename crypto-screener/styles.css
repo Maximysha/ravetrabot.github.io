@@ -43,6 +43,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 label, button, select {
@@ -55,6 +56,21 @@ button, select {
   border: 1px solid #2b3668;
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+input {
+  background: #1b2140;
+  border: 1px solid #2b3668;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  min-width: 170px;
+  text-transform: uppercase;
+}
+
+.symbol-add-wrap {
+  display: grid;
+  gap: 4px;
 }
 
 .timeframes {

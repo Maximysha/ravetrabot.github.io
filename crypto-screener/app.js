@@ -1,6 +1,7 @@
 const API_BASE = 'https://fapi.binance.com';
 const WS_BASE = 'wss://fstream.binance.com/stream?streams=';
 const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
+const MAX_CARDS = 20;
 
 const state = {
   timeframe: '5m',
@@ -15,6 +16,8 @@ const cardTemplate = document.getElementById('cardTemplate');
 const timeframesEl = document.getElementById('timeframes');
 const cardCountEl = document.getElementById('cardCount');
 const refreshEl = document.getElementById('refreshSymbols');
+const addSymbolInput = document.getElementById('addSymbolInput');
+const addSymbolBtn = document.getElementById('addSymbolBtn');
 
 renderTimeframeButtons();
 attachEvents();
@@ -40,6 +43,17 @@ function attachEvents() {
     buildCards();
     await Promise.all(state.cards.map((card) => loadHistory(card)));
     openStream();
+  });
+
+  addSymbolBtn.addEventListener('click', async () => {
+    await addSymbolCard(addSymbolInput.value);
+  });
+
+  addSymbolInput.addEventListener('keydown', async (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      await addSymbolCard(addSymbolInput.value);
+    }
   });
 }
 
@@ -90,58 +104,93 @@ function buildCards() {
   state.cards = [];
 
   state.symbols.slice(0, state.cardCount).forEach((symbolInfo) => {
-    const node = cardTemplate.content.firstElementChild.cloneNode(true);
-    const select = node.querySelector('.symbol-select');
-    const price = node.querySelector('.price');
-    const stats = node.querySelector('.stats');
-    const chartContainer = node.querySelector('.chart');
-
-    state.symbols.slice(0, 80).forEach((s) => {
-      const option = document.createElement('option');
-      option.value = s.symbol;
-      option.textContent = s.symbol;
-      if (s.symbol === symbolInfo.symbol) option.selected = true;
-      select.append(option);
-    });
-
-    const chart = LightweightCharts.createChart(chartContainer, {
-      layout: { background: { color: '#13172a' }, textColor: '#b8c2e8' },
-      grid: {
-        vertLines: { color: '#20264a' },
-        horzLines: { color: '#20264a' },
-      },
-      rightPriceScale: { borderColor: '#2a3363' },
-      timeScale: { borderColor: '#2a3363', timeVisible: true },
-      crosshair: { mode: 0 },
-      handleScroll: false,
-      handleScale: false,
-    });
-
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: '#00c48c',
-      downColor: '#ff4d6d',
-      borderVisible: false,
-      wickUpColor: '#00c48c',
-      wickDownColor: '#ff4d6d',
-    });
-
-    const volumeSeries = chart.addHistogramSeries({
-      priceFormat: { type: 'volume' },
-      priceScaleId: '',
-      scaleMargins: { top: 0.82, bottom: 0 },
-    });
-
-    const card = { symbol: symbolInfo.symbol, chart, candleSeries, volumeSeries, node, price, stats, select };
-    select.addEventListener('change', async (e) => {
-      card.symbol = e.target.value;
-      await loadHistory(card);
-      openStream();
-    });
-
+    const card = createCard(symbolInfo.symbol);
     updateTickerUI(card, symbolInfo);
     state.cards.push(card);
-    grid.append(node);
+    grid.append(card.node);
   });
+}
+
+function createCard(symbol) {
+  const node = cardTemplate.content.firstElementChild.cloneNode(true);
+  const select = node.querySelector('.symbol-select');
+  const price = node.querySelector('.price');
+  const stats = node.querySelector('.stats');
+  const chartContainer = node.querySelector('.chart');
+
+  state.symbols.slice(0, 80).forEach((s) => {
+    const option = document.createElement('option');
+    option.value = s.symbol;
+    option.textContent = s.symbol;
+    if (s.symbol === symbol) option.selected = true;
+    select.append(option);
+  });
+
+  const chart = LightweightCharts.createChart(chartContainer, {
+    layout: { background: { color: '#13172a' }, textColor: '#b8c2e8' },
+    grid: {
+      vertLines: { color: '#20264a' },
+      horzLines: { color: '#20264a' },
+    },
+    rightPriceScale: { borderColor: '#2a3363' },
+    timeScale: { borderColor: '#2a3363', timeVisible: true },
+    crosshair: { mode: 0 },
+    handleScroll: false,
+    handleScale: false,
+  });
+
+  const candleSeries = chart.addCandlestickSeries({
+    upColor: '#00c48c',
+    downColor: '#ff4d6d',
+    borderVisible: false,
+    wickUpColor: '#00c48c',
+    wickDownColor: '#ff4d6d',
+  });
+
+  const volumeSeries = chart.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: '',
+    scaleMargins: { top: 0.82, bottom: 0 },
+  });
+
+  const card = { symbol, chart, candleSeries, volumeSeries, node, price, stats, select };
+  select.addEventListener('change', async (e) => {
+    card.symbol = e.target.value;
+    await loadHistory(card);
+    openStream();
+  });
+
+  return card;
+}
+
+async function addSymbolCard(rawSymbol) {
+  const symbol = String(rawSymbol || '').trim().toUpperCase();
+  if (!symbol) return;
+
+  const ticker = state.symbols.find((item) => item.symbol === symbol);
+  if (!ticker) {
+    alert('Такої монети немає в Binance USDT Futures.');
+    return;
+  }
+
+  if (state.cards.some((card) => card.symbol === symbol)) {
+    alert('Ця монета вже додана.');
+    return;
+  }
+
+  if (state.cards.length >= MAX_CARDS) {
+    alert(`Максимум ${MAX_CARDS} карток одночасно.`);
+    return;
+  }
+
+  const card = createCard(symbol);
+  updateTickerUI(card, ticker);
+  state.cards.push(card);
+  grid.append(card.node);
+
+  await loadHistory(card);
+  openStream();
+  addSymbolInput.value = '';
 }
 
 async function loadHistory(card) {
