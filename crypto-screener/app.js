@@ -127,6 +127,8 @@ function createCard(symbol) {
   });
 
   const chart = LightweightCharts.createChart(chartContainer, {
+    width: Math.max(chartContainer.clientWidth, 320),
+    height: 230,
     layout: { background: { color: '#13172a' }, textColor: '#b8c2e8' },
     grid: {
       vertLines: { color: '#20264a' },
@@ -137,6 +139,10 @@ function createCard(symbol) {
     crosshair: { mode: 0 },
     handleScroll: false,
     handleScale: false,
+  });
+
+  window.addEventListener('resize', () => {
+    chart.applyOptions({ width: Math.max(chartContainer.clientWidth, 320), height: 230 });
   });
 
   const candleSeries = chart.addCandlestickSeries({
