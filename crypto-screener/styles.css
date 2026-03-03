@@ -73,6 +73,29 @@ input {
   gap: 4px;
 }
 
+
+.tv-panel {
+  margin: 12px 20px;
+  border: 1px solid #24305a;
+  border-radius: 12px;
+  background: #0f142e;
+  overflow: hidden;
+}
+
+.tv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1e2440;
+}
+
+.tv-chart {
+  width: 100%;
+  height: 420px;
+}
+
 .timeframes {
   display: flex;
   gap: 8px;

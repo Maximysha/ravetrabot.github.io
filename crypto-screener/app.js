@@ -11,6 +11,8 @@ const state = {
   cards: [],
   ws: null,
   mockTimer: null,
+  tvSymbol: 'BTCUSDT',
+  tvWidget: null,
 };
 
 const grid = document.getElementById('grid');
@@ -21,6 +23,7 @@ const refreshEl = document.getElementById('refreshSymbols');
 const addSymbolInput = document.getElementById('addSymbolInput');
 const addSymbolBtn = document.getElementById('addSymbolBtn');
 const statusEl = document.getElementById('status');
+const tvSymbolSelect = document.getElementById('tvSymbolSelect');
 
 renderTimeframeButtons();
 attachEvents();
@@ -28,6 +31,8 @@ bootstrap();
 
 async function bootstrap() {
   await loadSymbols();
+  populateTvSymbolSelect();
+  renderTradingViewWidget();
   buildCards();
   await Promise.all(state.cards.map((card) => loadHistory(card)));
   openStream();
@@ -43,6 +48,8 @@ function attachEvents() {
 
   refreshEl.addEventListener('click', async () => {
     await loadSymbols();
+    populateTvSymbolSelect();
+    renderTradingViewWidget();
     buildCards();
     await Promise.all(state.cards.map((card) => loadHistory(card)));
     openStream();
@@ -58,6 +65,11 @@ function attachEvents() {
       await addSymbolCard(addSymbolInput.value);
     }
   });
+
+  tvSymbolSelect.addEventListener('change', () => {
+    state.tvSymbol = tvSymbolSelect.value;
+    renderTradingViewWidget();
+  });
 }
 
 function renderTimeframeButtons() {
@@ -69,10 +81,63 @@ function renderTimeframeButtons() {
     btn.addEventListener('click', async () => {
       state.timeframe = tf;
       renderTimeframeButtons();
+      renderTradingViewWidget();
       await Promise.all(state.cards.map((card) => loadHistory(card)));
       openStream();
     });
     timeframesEl.append(btn);
+  });
+}
+
+function getTvResolution(tf) {
+  const map = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '4h': '240', '1d': 'D' };
+  return map[tf] || '5';
+}
+
+function toTvSymbol(symbol) {
+  return `BINANCE:${symbol}.P`;
+}
+
+function populateTvSymbolSelect() {
+  if (!tvSymbolSelect) return;
+  tvSymbolSelect.innerHTML = '';
+  state.symbols.slice(0, 120).forEach((s) => {
+    const option = document.createElement('option');
+    option.value = s.symbol;
+    option.textContent = s.symbol;
+    if (s.symbol === state.tvSymbol) option.selected = true;
+    tvSymbolSelect.append(option);
+  });
+
+  if (!state.symbols.some((s) => s.symbol === state.tvSymbol) && state.symbols.length) {
+    state.tvSymbol = state.symbols[0].symbol;
+    tvSymbolSelect.value = state.tvSymbol;
+  }
+}
+
+function renderTradingViewWidget() {
+  const tvRoot = document.getElementById('tvChart');
+  if (!tvRoot) return;
+  tvRoot.innerHTML = '';
+
+  if (!window.TradingView || !window.TradingView.widget) {
+    tvRoot.innerHTML = '<div style="padding:16px;color:#ffd48a;">TradingView script не завантажився.</div>';
+    return;
+  }
+
+  state.tvWidget = new window.TradingView.widget({
+    autosize: true,
+    symbol: toTvSymbol(state.tvSymbol),
+    interval: getTvResolution(state.timeframe),
+    timezone: 'Etc/UTC',
+    theme: 'dark',
+    style: '1',
+    locale: 'uk',
+    enable_publishing: false,
+    allow_symbol_change: false,
+    hide_top_toolbar: false,
+    withdateranges: true,
+    container_id: 'tvChart',
   });
 }
 
@@ -220,11 +285,16 @@ async function addSymbolCard(rawSymbol) {
     return;
   }
 
+  if (!state.symbols.some((s) => s.symbol === symbol)) {
+    state.symbols.unshift(ticker);
+  }
+
   const card = createCard(symbol);
   updateTickerUI(card, ticker);
   state.cards.push(card);
   grid.append(card.node);
 
+  populateTvSymbolSelect();
   await loadHistory(card);
   openStream();
   addSymbolInput.value = '';
