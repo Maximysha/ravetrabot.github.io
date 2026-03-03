@@ -94,6 +94,23 @@ input {
   box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
+
+.status {
+  margin: 0 20px 12px;
+  padding: 8px 12px;
+  border: 1px solid #24305a;
+  border-radius: 8px;
+  color: #9fb1f1;
+  background: #111733;
+  font-size: .88rem;
+}
+
+.status.warning {
+  border-color: #6a4a1f;
+  color: #ffd48a;
+  background: #2a2011;
+}
+
 .grid {
   padding: 0 20px 20px;
   display: grid;

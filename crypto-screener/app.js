@@ -2,6 +2,7 @@ const API_BASE = 'https://fapi.binance.com';
 const WS_BASE = 'wss://fstream.binance.com/stream?streams=';
 const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
 const MAX_CARDS = 20;
+const DEFAULT_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LINKUSDT'];
 
 const state = {
   timeframe: '5m',
@@ -9,6 +10,7 @@ const state = {
   symbols: [],
   cards: [],
   ws: null,
+  mockTimer: null,
 };
 
 const grid = document.getElementById('grid');
@@ -18,6 +20,7 @@ const cardCountEl = document.getElementById('cardCount');
 const refreshEl = document.getElementById('refreshSymbols');
 const addSymbolInput = document.getElementById('addSymbolInput');
 const addSymbolBtn = document.getElementById('addSymbolBtn');
+const statusEl = document.getElementById('status');
 
 renderTimeframeButtons();
 attachEvents();
@@ -73,30 +76,58 @@ function renderTimeframeButtons() {
   });
 }
 
+async function safeFetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+function createFallbackSymbols() {
+  return DEFAULT_SYMBOLS.map((symbol, index) => ({
+    symbol,
+    lastPrice: 100 + index * 50,
+    change: 0,
+    quoteVolume: 1_000_000,
+  }));
+}
+
 async function loadSymbols() {
-  const [infoRes, tickersRes] = await Promise.all([
-    fetch(`${API_BASE}/fapi/v1/exchangeInfo`),
-    fetch(`${API_BASE}/fapi/v1/ticker/24hr`),
-  ]);
+  try {
+    const [info, tickers] = await Promise.all([
+      safeFetchJson(`${API_BASE}/fapi/v1/exchangeInfo`),
+      safeFetchJson(`${API_BASE}/fapi/v1/ticker/24hr`),
+    ]);
 
-  const info = await infoRes.json();
-  const tickers = await tickersRes.json();
+    const tradable = new Set(
+      info.symbols
+        .filter((s) => s.status === 'TRADING' && s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL')
+        .map((s) => s.symbol),
+    );
 
-  const tradable = new Set(
-    info.symbols
-      .filter((s) => s.status === 'TRADING' && s.quoteAsset === 'USDT' && s.contractType === 'PERPETUAL')
-      .map((s) => s.symbol),
-  );
+    state.symbols = tickers
+      .filter((t) => tradable.has(t.symbol))
+      .sort((a, b) => Number(b.quoteVolume) - Number(a.quoteVolume))
+      .map((t) => ({
+        symbol: t.symbol,
+        lastPrice: Number(t.lastPrice),
+        change: Number(t.priceChangePercent),
+        quoteVolume: Number(t.quoteVolume),
+      }));
 
-  state.symbols = tickers
-    .filter((t) => tradable.has(t.symbol))
-    .sort((a, b) => Number(b.quoteVolume) - Number(a.quoteVolume))
-    .map((t) => ({
-      symbol: t.symbol,
-      lastPrice: Number(t.lastPrice),
-      change: Number(t.priceChangePercent),
-      quoteVolume: Number(t.quoteVolume),
-    }));
+    setStatus('Підключено до Binance Futures API.', false);
+  } catch (error) {
+    console.error('loadSymbols fallback:', error);
+    state.symbols = createFallbackSymbols();
+    setStatus('Binance API недоступний у цьому середовищі. Показую fallback-графіки.', true);
+  }
+}
+
+function setStatus(text, isWarning) {
+  if (!statusEl) return;
+  statusEl.textContent = text;
+  statusEl.className = isWarning ? 'status warning' : 'status';
 }
 
 function buildCards() {
@@ -118,7 +149,7 @@ function createCard(symbol) {
   const stats = node.querySelector('.stats');
   const chartContainer = node.querySelector('.chart');
 
-  state.symbols.slice(0, 80).forEach((s) => {
+  state.symbols.slice(0, 120).forEach((s) => {
     const option = document.createElement('option');
     option.value = s.symbol;
     option.textContent = s.symbol;
@@ -175,7 +206,7 @@ async function addSymbolCard(rawSymbol) {
 
   const ticker = state.symbols.find((item) => item.symbol === symbol);
   if (!ticker) {
-    alert('Такої монети немає в Binance USDT Futures.');
+    alert('Такої монети немає в списку доступних інструментів.');
     return;
   }
 
@@ -199,38 +230,122 @@ async function addSymbolCard(rawSymbol) {
   addSymbolInput.value = '';
 }
 
+function generateMockKlines(basePrice = 100, points = 220) {
+  const now = Math.floor(Date.now() / 1000);
+  const candles = [];
+  const volumes = [];
+  let lastClose = basePrice;
+
+  for (let i = points; i > 0; i -= 1) {
+    const time = now - i * 60;
+    const open = lastClose;
+    const delta = (Math.random() - 0.5) * basePrice * 0.01;
+    const close = Math.max(0.0001, open + delta);
+    const high = Math.max(open, close) * (1 + Math.random() * 0.002);
+    const low = Math.min(open, close) * (1 - Math.random() * 0.002);
+    const volume = 100 + Math.random() * 500;
+
+    candles.push({ time, open, high, low, close });
+    volumes.push({ time, value: volume, color: close >= open ? 'rgba(0,196,140,0.5)' : 'rgba(255,77,109,0.5)' });
+    lastClose = close;
+  }
+
+  return { candles, volumes, lastClose };
+}
+
 async function loadHistory(card) {
-  const res = await fetch(`${API_BASE}/fapi/v1/klines?symbol=${card.symbol}&interval=${state.timeframe}&limit=220`);
-  const klines = await res.json();
+  try {
+    const klines = await safeFetchJson(`${API_BASE}/fapi/v1/klines?symbol=${card.symbol}&interval=${state.timeframe}&limit=220`);
 
-  const candles = klines.map((k) => ({
-    time: Math.floor(k[0] / 1000),
-    open: Number(k[1]),
-    high: Number(k[2]),
-    low: Number(k[3]),
-    close: Number(k[4]),
-  }));
+    const candles = klines.map((k) => ({
+      time: Math.floor(k[0] / 1000),
+      open: Number(k[1]),
+      high: Number(k[2]),
+      low: Number(k[3]),
+      close: Number(k[4]),
+    }));
 
-  const volumes = klines.map((k) => ({
-    time: Math.floor(k[0] / 1000),
-    value: Number(k[5]),
-    color: Number(k[4]) >= Number(k[1]) ? 'rgba(0,196,140,0.5)' : 'rgba(255,77,109,0.5)',
-  }));
+    const volumes = klines.map((k) => ({
+      time: Math.floor(k[0] / 1000),
+      value: Number(k[5]),
+      color: Number(k[4]) >= Number(k[1]) ? 'rgba(0,196,140,0.5)' : 'rgba(255,77,109,0.5)',
+    }));
 
-  card.candleSeries.setData(candles);
-  card.volumeSeries.setData(volumes);
+    card.candleSeries.setData(candles);
+    card.volumeSeries.setData(volumes);
+    card.lastTime = candles.length ? candles[candles.length - 1].time : null;
 
-  const ticker = state.symbols.find((s) => s.symbol === card.symbol);
-  if (ticker) updateTickerUI(card, ticker);
+    const ticker = state.symbols.find((s) => s.symbol === card.symbol);
+    if (ticker) updateTickerUI(card, ticker);
+  } catch (error) {
+    console.error('loadHistory fallback:', card.symbol, error);
+    const base = state.symbols.find((s) => s.symbol === card.symbol)?.lastPrice || 100;
+    const mock = generateMockKlines(base);
+    card.candleSeries.setData(mock.candles);
+    card.volumeSeries.setData(mock.volumes);
+    card.lastTime = mock.candles.length ? mock.candles[mock.candles.length - 1].time : null;
+    card.price.textContent = mock.lastClose.toFixed(mock.lastClose > 1000 ? 2 : 4);
+  }
+}
+
+function startMockRealtime() {
+  stopMockRealtime();
+  state.mockTimer = setInterval(() => {
+    const now = Math.floor(Date.now() / 1000);
+    state.cards.forEach((card) => {
+      const current = Number(card.price.textContent || '100') || 100;
+      const open = current;
+      const close = Math.max(0.0001, open + (Math.random() - 0.5) * open * 0.003);
+      const high = Math.max(open, close) * (1 + Math.random() * 0.0015);
+      const low = Math.min(open, close) * (1 - Math.random() * 0.0015);
+
+      const nextTime = card.lastTime ? Math.max(now, card.lastTime + 1) : now;
+      card.lastTime = nextTime;
+      card.candleSeries.update({ time: nextTime, open, high, low, close });
+      card.volumeSeries.update({
+        time: nextTime,
+        value: 100 + Math.random() * 400,
+        color: close >= open ? 'rgba(0,196,140,0.5)' : 'rgba(255,77,109,0.5)',
+      });
+      card.price.textContent = close.toFixed(close > 1000 ? 2 : 4);
+    });
+  }, 1500);
+}
+
+function stopMockRealtime() {
+  if (state.mockTimer) {
+    clearInterval(state.mockTimer);
+    state.mockTimer = null;
+  }
 }
 
 function openStream() {
-  if (state.ws) state.ws.close();
+  stopMockRealtime();
+  if (state.ws) {
+    state.ws.close();
+    state.ws = null;
+  }
 
   const streamNames = state.cards.map((card) => `${card.symbol.toLowerCase()}@kline_${state.timeframe}`);
   if (!streamNames.length) return;
 
-  state.ws = new WebSocket(`${WS_BASE}${streamNames.join('/')}`);
+  try {
+    state.ws = new WebSocket(`${WS_BASE}${streamNames.join('/')}`);
+  } catch (error) {
+    console.error('ws init fallback:', error);
+    setStatus('WebSocket недоступний. Увімкнено fallback live-режим.', true);
+    startMockRealtime();
+    return;
+  }
+
+  state.ws.onopen = () => setStatus('Реальний час підключено (WebSocket).', false);
+  state.ws.onerror = () => {
+    setStatus('Помилка WebSocket. Увімкнено fallback live-режим.', true);
+    startMockRealtime();
+  };
+  state.ws.onclose = () => {
+    if (!state.mockTimer) startMockRealtime();
+  };
 
   state.ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -242,8 +357,12 @@ function openStream() {
     if (!card) return;
 
     const k = payload.k;
+    const nextTime = Math.floor(k.t / 1000);
+    if (card.lastTime && nextTime < card.lastTime) return;
+    card.lastTime = nextTime;
+
     const candle = {
-      time: Math.floor(k.t / 1000),
+      time: nextTime,
       open: Number(k.o),
       high: Number(k.h),
       low: Number(k.l),
@@ -252,7 +371,7 @@ function openStream() {
 
     card.candleSeries.update(candle);
     card.volumeSeries.update({
-      time: Math.floor(k.t / 1000),
+      time: nextTime,
       value: Number(k.v),
       color: Number(k.c) >= Number(k.o) ? 'rgba(0,196,140,0.5)' : 'rgba(255,77,109,0.5)',
     });
