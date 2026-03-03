@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binance Futures Crypto Screener</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Binance Futures Screener</h1>
+      <p class="subtitle">Реальний час • USDT Perpetual • мультиграфіки</p>
+    </div>
+    <div class="controls">
+      <label>
+        Карток
+        <select id="cardCount">
+          <option value="6">6</option>
+          <option value="9" selected>9</option>
+          <option value="12">12</option>
+        </select>
+      </label>
+      <button id="refreshSymbols">Оновити монети</button>
+    </div>
+  </header>
+
+  <section class="timeframes" id="timeframes"></section>
+
+  <main id="grid" class="grid"></main>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="card-header">
+        <div class="symbol-wrap">
+          <select class="symbol-select"></select>
+          <span class="price"></span>
+        </div>
+        <div class="stats"></div>
+      </div>
+      <div class="chart"></div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
