@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <title>CoinScope — криптоскринер</title>
+  <link rel="preconnect" href="https://api.coingecko.com">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="CoinScope">
+        <span class="brand-mark">C</span><span>Coin<span>Scope</span></span>
+      </a>
+      <div class="market-state"><i></i><span id="marketStatus">Рынок загружается</span></div>
+      <button class="refresh" id="refreshButton" type="button" aria-label="Обновить данные">↻ <span>Обновить</span></button>
+    </header>
+
+    <section class="hero" id="top">
+      <p class="eyebrow">Криптоскринер</p>
+      <h1>Находите монеты,<br><em>которые движутся.</em></h1>
+      <p class="hero-copy">Отбирайте активы по капитализации, объёму и динамике цены. Данные обновляются из CoinGecko.</p>
+      <div class="stat-grid" aria-label="Сводка рынка">
+        <article><span>Капитализация рынка</span><strong id="marketCap">—</strong></article>
+        <article><span>Объём за 24ч</span><strong id="marketVolume">—</strong></article>
+        <article><span>Монет в выдаче</span><strong id="coinCount">—</strong></article>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="Список криптовалют">
+      <aside class="filters">
+        <div class="filter-heading"><h2>Фильтры</h2><button id="resetFilters" type="button">Сбросить</button></div>
+        <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Поиск монеты" autocomplete="off"></label>
+        <fieldset>
+          <legend>Изменение за 24ч</legend>
+          <div class="range-labels"><span>от <b id="changeValue">−10%</b></span><span>+50%</span></div>
+          <input id="changeRange" type="range" min="-10" max="50" value="-10" step="1">
+        </fieldset>
+        <fieldset>
+          <legend>Капитализация</legend>
+          <label class="select-label">От<select id="marketCapFilter"><option value="0">Любая</option><option value="100000000">$100 млн</option><option value="1000000000">$1 млрд</option><option value="10000000000">$10 млрд</option></select></label>
+        </fieldset>
+        <fieldset>
+          <legend>Объём за 24ч</legend>
+          <label class="select-label">От<select id="volumeFilter"><option value="0">Любой</option><option value="10000000">$10 млн</option><option value="100000000">$100 млн</option><option value="1000000000">$1 млрд</option></select></label>
+        </fieldset>
+        <button class="watchlist-button" id="watchlistButton" type="button">☆ Показать избранное</button>
+      </aside>
+
+      <div class="results">
+        <div class="results-top"><div><p class="eyebrow">Рынок</p><h2 id="resultsTitle">Все монеты</h2></div><p id="updatedAt">Обновление…</p></div>
+        <div class="quick-filters" aria-label="Быстрые фильтры">
+          <button class="active" data-filter="all" type="button">Все</button>
+          <button data-filter="gainers" type="button">Лидеры роста</button>
+          <button data-filter="volume" type="button">Высокий объём</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Актив</th><th><button data-sort="current_price" type="button">Цена <span>↕</span></button></th><th><button data-sort="price_change_percentage_24h" type="button">24ч <span>↕</span></button></th><th><button data-sort="total_volume" type="button">Объём <span>↕</span></button></th><th><button data-sort="market_cap" type="button">Капитализация <span>↕</span></button></th><th aria-label="Избранное"></th></tr></thead>
+            <tbody id="coinRows"><tr><td class="loading" colspan="7">Загружаем данные рынка…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="disclaimer">Не является инвестиционной рекомендацией. Проверяйте данные и оценивайте риски самостоятельно.</p>
+      </div>
+    </section>
+  </main>
+  <template id="coinRowTemplate"><tr><td class="rank"></td><td><div class="asset"><img><div><strong></strong><small></small></div></div></td><td class="price"></td><td class="change"></td><td class="volume"></td><td class="cap"></td><td><button class="star" type="button" aria-label="Добавить в избранное">☆</button></td></tr></template>
+  <script src="app.js"></script>
+</body>
+</html>
